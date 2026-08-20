@@ -17,7 +17,7 @@ async def cook_sauce(queue: asyncio.Queue):
     await asyncio.sleep(7.0) # 7分間煮込む
     yield "[10分] 3. ソースとパスタを和えて完成！"
 
-# 3. どちらのメッセージも届いた瞬間に即時出力する（修正箇所）
+# 3. どちらのメッセージも届いた瞬間に即時出力する
 async def merge(stream, queue: asyncio.Queue):
     main_task = asyncio.create_task(anext(stream, None))
     queue_task = asyncio.create_task(queue.get())
