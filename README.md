@@ -16,17 +16,17 @@ sequenceDiagram
     Merge->>EvLoop: create_task(anext) & create_task(queue.get) を登録
     Merge->>EvLoop: 1. await wait() ➔ 「完了まで一時停止し、制御を返す」
     
-    EvLoop->>Sauce: 2. 制御を渡して再開 (anext開始)
+    EvLoop->>Sauce: 2. 制御を渡して初回実行を開始 (anext/cook_sauce)
     Sauce-->>Merge: yield "[0分] 1. お湯を沸かして..."
     Sauce->>EvLoop: create_task(boil_pasta) を登録
     Sauce->>EvLoop: 3. await sleep(3.0) ➔ 「3秒タイマーセット＆制御を返す」
     
-    EvLoop->>Pasta: 4. 制御を渡して開始 (boil_pasta開始)
+    EvLoop->>Pasta: 4. 制御を渡して初回実行を開始 (boil_pasta)
     Pasta->>Queue: await queue.put(...) ➔ イベントループ経由でキューへ格納
     Queue-->>EvLoop: 格納完了
     Pasta->>EvLoop: 5. await sleep(8.0) ➔ 「8秒タイマーセット＆制御を返す」
     
-    EvLoop->>Merge: 6. wait が条件を満たしたため制御を渡す
+    EvLoop->>Merge: 6. wait が条件を満たしたため制御を渡して再開
     Merge-->>Main: yield "[0分] 1. お湯を沸かして..."
     Merge->>Queue: queue.get() から「パスタ投入」を取得
     Merge-->>Main: yield "  [0分] 🍝 パスタを鍋に投入！"
