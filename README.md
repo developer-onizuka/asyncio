@@ -8,63 +8,62 @@ sequenceDiagram
     participant Pasta as boil_pasta()
     participant Queue as asyncio.Queue
 
-    Main->>Merge: async for でメッセージを要求
+    Main->>EvLoop: merge() の実行を要求
     
     rect rgb(240, 240, 255)
-    note over Merge, Sauce: [0分] 初期起動フェーズ
-    Merge->>EvLoop: asyncio.create_task(anext) & (queue.get) を登録
-    Merge->>EvLoop: await asyncio.wait() で一時停止
+    note over Merge, Pasta: [0分] 初期起動＆タスク登録
+    EvLoop->>Merge: 処理を開始
+    Merge->>EvLoop: create_task(anext) & create_task(queue.get) を登録
+    Merge->>EvLoop: 1. await wait() ➔ 「完了まで許可を保留してください」
     
-    EvLoop->>Sauce: anext() を実行開始
+    EvLoop->>Sauce: 2. 実行許可を与える (anext開始)
     Sauce-->>Merge: yield "[0分] 1. お湯を沸かして..."
-    Sauce->>EvLoop: asyncio.create_task(boil_pasta) を登録
+    Sauce->>EvLoop: create_task(boil_pasta) を登録
+    Sauce->>EvLoop: 3. await sleep(3.0) ➔ 「3秒タイマーセット＆許可を返上」
     
-    EvLoop->>Pasta: boil_pasta を実行開始
-    Pasta->>Queue: await queue.put("  [0分] 🍝 パスタを鍋に投入！")
-    Queue-->>EvLoop: 格納完了＆待機中の queue.get() を通知
-    Pasta->>EvLoop: await asyncio.sleep(8.0) でスリープ
+    EvLoop->>Pasta: 4. 実行許可を与える (boil_pasta開始)
+    Pasta->>Queue: await queue.put(...) ➔ イベントループ経由でキューへ格納
+    Queue-->>EvLoop: 格納完了
+    Pasta->>EvLoop: 5. await sleep(8.0) ➔ 「8秒タイマーセット＆許可を返上」
     
-    EvLoop->>Merge: wait 完了 (Sauce と Queue の両方が準備完了)
+    EvLoop->>Merge: 6. wait が条件を満たしたため実行許可を与える
     Merge-->>Main: yield "[0分] 1. お湯を沸かして..."
-    Merge->>Queue: queue.get() でメッセージを取得
-    Queue-->>Merge: "  [0分] 🍝 パスタを鍋に投入！"
+    Merge->>Queue: queue.get() から「パスタ投入」を取得
     Merge-->>Main: yield "  [0分] 🍝 パスタを鍋に投入！"
-    Merge->>EvLoop: 再度 anext() と queue.get() をセットして await wait()
+    Merge->>EvLoop: 7. await wait() ➔ 「次のイベントまで許可を保留」
     end
 
     rect rgb(255, 240, 240)
-    note over Sauce, Pasta: 時間経過 [0分 -> 3分]
-    EvLoop->>Sauce: await asyncio.sleep(3.0) が完了
+    note over Sauce, Merge: [3分経過] ソース側のタイマー満了
+    EvLoop->>Sauce: 8. 3秒経過！実行許可を与える
     Sauce-->>Merge: yield "[3分] 2. ニンニクを弱火で炒める"
-    Sauce->>EvLoop: await asyncio.sleep(7.0) でスリープ
+    Sauce->>EvLoop: 9. await sleep(7.0) ➔ 「7秒タイマーセット＆許可を返上」
     
-    EvLoop->>Merge: wait 完了 (Sauce 側)
+    EvLoop->>Merge: 10. wait 完了のため実行許可を与える
     Merge-->>Main: yield "[3分] 2. ニンニクを弱火で炒める"
-    Merge->>EvLoop: 再度 anext() をセットして await wait()
+    Merge->>EvLoop: 11. await wait() ➔ 「次のイベントまで許可を保留」
     end
 
     rect rgb(240, 255, 240)
-    note over Sauce, Pasta: 時間経過 [3分 -> 8分]
-    EvLoop->>Pasta: await asyncio.sleep(8.0) が完了 (8分到達)
-    Pasta->>Queue: await queue.put("  [8分] ⏰ パスタが茹であがりました！")
-    Queue-->>EvLoop: 待機中の queue.get() を通知
-    Pasta->>EvLoop: boil_pasta 終了
+    note over Pasta, Merge: [8分経過] パスタ側のタイマー満了
+    EvLoop->>Pasta: 12. 8秒経過！実行許可を与える
+    Pasta->>Queue: await queue.put(...) ➔ イベントループ経由でキューへ格納
+    Pasta->>EvLoop: 13. 処理終了 (許可を返上)
     
-    EvLoop->>Merge: wait 完了 (Queue 側)
-    Merge->>Queue: queue.get() でメッセージを取得
-    Queue-->>Merge: "  [8分] ⏰ パスタが茹であがりました！"
+    EvLoop->>Merge: 14. wait(get) 完了のため実行許可を与える
+    Merge->>Queue: queue.get() から「茹であがり」を取得
     Merge-->>Main: yield "  [8分] ⏰ パスタが茹であがりました！"
-    Merge->>EvLoop: 再度 queue.get() をセットして await wait()
+    Merge->>EvLoop: 15. await wait() ➔ 「次のイベントまで許可を保留」
     end
 
     rect rgb(255, 255, 240)
-    note over Sauce, Merge: 時間経過 [8分 -> 10分]
-    EvLoop->>Sauce: await asyncio.sleep(7.0) が完了 (10分到達)
+    note over Sauce, Merge: [10分経過] ソース完成＆終了処理
+    EvLoop->>Sauce: 16. 7秒経過！(合計10分) 実行許可を与える
     Sauce-->>Merge: yield "[10分] 3. 完成！"
-    Sauce->>EvLoop: cook_sauce 終了 (StopAsyncIteration)
+    Sauce->>EvLoop: 17. 処理終了 (StopAsyncIteration)
     
-    EvLoop->>Merge: wait 完了 (Sauce 終了通知 None)
+    EvLoop->>Merge: 18. ストリーム終了に伴い実行許可を与える
     Merge->>Queue: queue_task.cancel() で後片付け
-    Merge-->>Main: merge 終了
+    Merge-->>Main: 全処理完了
     end
 ```
