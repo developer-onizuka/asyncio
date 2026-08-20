@@ -26,14 +26,16 @@ sequenceDiagram
     end
 
     rect rgb(230, 230, 250)
-    note over Main, Queue: ⏱️ [0分時点・後半] boil_pasta 起動とパスタ投入
+    note over Main, Queue: ⏱️ [0分時点・後半] boil_pasta 起動と各タイマーの計測開始
     EvLoop->>Sauce: anext [第二世代] を実行
     Sauce->>EvLoop: 【ステップ11】 create_task(boil_pasta)
     Sauce->>EvLoop: 【ステップ12】 await sleep(3.0) ➔ ⏱️ 3分タイマーセット＆制御を渡す
+    note over EvLoop, Sauce: ⏳【0分00秒】イベントループがSauceの3分タイマー計測を開始！
     
     EvLoop->>Pasta: boil_pasta を実行
     Pasta->>Queue: 【ステップ13】 await queue.put("パスタ投入") (queue_task 第一世代完了)
     Pasta->>EvLoop: 【ステップ14】 await sleep(8.0) ➔ ⏱️ 8分タイマーセット＆制御を渡す
+    note over EvLoop, Pasta: ⏳【0分00秒】イベントループがPastaの8分タイマー計測を開始！
     
     EvLoop->>Merge: 第一世代 queue_task 完了につき制御復帰
     Merge-->>Main: 【ステップ15-16】 elif completed == queue_task ➔ yield パスタ投入
@@ -42,7 +44,7 @@ sequenceDiagram
     end
 
     rect rgb(255, 235, 235)
-    note over EvLoop, Sauce: ⏳【イベントループが計測中】 Sauceの依頼で3分（3秒）タイマーをカウントダウン
+    note over EvLoop, Sauce: ⏳ ステップ12から継続測定中 ➔ 3分が経過しタイマー満了！
     end
 
     rect rgb(255, 240, 240)
@@ -57,10 +59,11 @@ sequenceDiagram
     
     EvLoop->>Sauce: anext [第三世代] を実行
     Sauce->>EvLoop: 【ステップ24】 await sleep(7.0) ➔ ⏱️ 7分タイマーセット＆制御を渡す
+    note over EvLoop, Sauce: ⏳【3分00秒】イベントループがSauceの7分タイマー計測を開始！
     end
 
     rect rgb(235, 255, 235)
-    note over EvLoop, Pasta: ⏳【イベントループが計測中】 Pastaの8分タイマー（残り5秒）をカウントダウン
+    note over EvLoop, Pasta: ⏳ ステップ14から継続測定中 ➔ 8分が経過しタイマー満了！
     end
 
     rect rgb(240, 255, 240)
@@ -75,7 +78,7 @@ sequenceDiagram
     end
 
     rect rgb(255, 255, 225)
-    note over EvLoop, Sauce: ⏳【イベントループが計測中】 Sauceの7分タイマー（残り2秒）をカウントダウン
+    note over EvLoop, Sauce: ⏳ ステップ24から継続測定中 ➔ 合計10分（7分間）が経過しタイマー満了！
     end
 
     rect rgb(255, 255, 240)
