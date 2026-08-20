@@ -1,4 +1,4 @@
-```
+```mermaid
 sequenceDiagram
     autonumber
     participant Loop as イベントループ (司令塔)
