@@ -29,11 +29,11 @@ sequenceDiagram
     note over Main, Queue: ⏱️ [0分時点・後半] boil_pasta 起動とパスタ投入
     EvLoop->>Sauce: anext [第二世代] を実行
     Sauce->>EvLoop: 【ステップ11】 create_task(boil_pasta)
-    Sauce->>EvLoop: 【ステップ12】 await sleep(3.0) ➔ 制御を渡す
+    Sauce->>EvLoop: 【ステップ12】 await sleep(3.0) ➔ ⏱️ 3分タイマーセット＆制御を渡す
     
     EvLoop->>Pasta: boil_pasta を実行
     Pasta->>Queue: 【ステップ13】 await queue.put("パスタ投入") (queue_task 第一世代完了)
-    Pasta->>EvLoop: 【ステップ14】 await sleep(8.0) ➔ 制御を渡す
+    Pasta->>EvLoop: 【ステップ14】 await sleep(8.0) ➔ ⏱️ 8分タイマーセット＆制御を渡す
     
     EvLoop->>Merge: 第一世代 queue_task 完了につき制御復帰
     Merge-->>Main: 【ステップ15-16】 elif completed == queue_task ➔ yield パスタ投入
@@ -41,8 +41,12 @@ sequenceDiagram
     Merge->>EvLoop: 【ステップ18】 3回目 await wait() ➔ 制御を渡す
     end
 
+    rect rgb(255, 235, 235)
+    note over Main, Queue: ⏳【時間経過：0分 ➔ 3分】 ステップ12でセットした3分（3秒）タイマーのカウントダウン中...
+    end
+
     rect rgb(255, 240, 240)
-    note over Main, Queue: ⏳【時間経過：3分目】 ソースのニンニク炒め
+    note over Main, Queue: ⏳【3分経過時点】 ソースのニンニク炒め
     EvLoop->>Sauce: 3秒経過！anext [第二世代] を再開
     Sauce-->>Merge: 【ステップ19】 yield "[3分] 2. ニンニクを..." (第二世代完了)
     
@@ -52,11 +56,15 @@ sequenceDiagram
     Merge->>EvLoop: 【ステップ23】 4回目 await wait() ➔ 制御を渡す
     
     EvLoop->>Sauce: anext [第三世代] を実行
-    Sauce->>EvLoop: 【ステップ24】 await sleep(7.0) ➔ 制御を渡す
+    Sauce->>EvLoop: 【ステップ24】 await sleep(7.0) ➔ ⏱️ 7分タイマーセット＆制御を渡す
+    end
+
+    rect rgb(235, 255, 235)
+    note over Main, Queue: ⏳【時間経過：3分 ➔ 8分】 ステップ14でセットした8分（残り5秒）タイマーのカウントダウン中...
     end
 
     rect rgb(240, 255, 240)
-    note over Main, Queue: ⏳【時間経過：8分目】 パスタ茹であがり
+    note over Main, Queue: ⏳【8分経過時点】 パスタ茹であがり
     EvLoop->>Pasta: 8秒経過！boil_pasta を再開
     Pasta->>Queue: 【ステップ25】 await queue.put("茹であがり") (queue_task 第二世代完了)
     
@@ -66,8 +74,12 @@ sequenceDiagram
     Merge->>EvLoop: 【ステップ29】 5回目 await wait() ➔ 制御を渡す
     end
 
+    rect rgb(255, 255, 225)
+    note over Main, Queue: ⏳【時間経過：8分 ➔ 10分】 ステップ24でセットした7分（残り2秒）タイマーのカウントダウン中...
+    end
+
     rect rgb(255, 255, 240)
-    note over Main, Queue: ⏳【時間経過：10分目】 完成と終了処理
+    note over Main, Queue: ⏳【10分経過時点】 完成と終了処理
     EvLoop->>Sauce: 7秒経過！anext [第三世代] を再開
     Sauce-->>Merge: 【ステップ30】 yield "[10分] 3. 完成！" (第三世代完了)
     
