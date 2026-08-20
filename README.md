@@ -1,3 +1,4 @@
+```
 sequenceDiagram
     autonumber
     participant Loop as イベントループ (司令塔)
@@ -62,3 +63,4 @@ sequenceDiagram
     Merge->>Queue: queue_task.cancel() で後片付け
     Merge-->>Main: merge 終了
     end
+```
