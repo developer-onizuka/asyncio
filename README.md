@@ -26,16 +26,20 @@ sequenceDiagram
     end
 
     rect rgb(230, 230, 250)
-    note over Main, Queue: ⏱️ [0分時点・後半] boil_pasta 起動と各タイマーの計測開始
+    note over Main, Queue: ⏱️ [0分時点・後半] パスタの依頼 ➔ 自分の作業開始
     EvLoop->>Sauce: anext [第二世代] を実行
     Sauce->>EvLoop: 【ステップ11】 create_task(boil_pasta)
-    Sauce->>EvLoop: 【ステップ12】 await sleep(3.0) ➔ ⏱️ 3分タイマーセット＆制御を渡す
-    note over EvLoop, Sauce: ⏳【0分00秒】イベントループがSauceの3分タイマー計測を開始！
+    note over Sauce, Pasta: 🍳【段取り】自分が3分待つ前に、まず「パスタを茹でて！」と先に依頼しておく！
     
-    EvLoop->>Pasta: boil_pasta を実行
+    Sauce->>EvLoop: 【ステップ12】 await sleep(3.0) ➔ ⏱️ 自分の3分タイマーセット＆制御を渡す
+    note over EvLoop, Sauce: ⏳【0分00秒】お願い完了後、安心して自分の3分タイマーを開始！
+    
+    EvLoop->>Pasta: boil_pasta を実行（依頼されたパスタの作業を開始）
     Pasta->>Queue: 【ステップ13】 await queue.put("パスタ投入") (queue_task 第一世代完了)
-    Pasta->>EvLoop: 【ステップ14】 await sleep(8.0) ➔ ⏱️ 8分タイマーセット＆制御を渡す
-    note over EvLoop, Pasta: ⏳【0分00秒】イベントループがPastaの8分タイマー計測を開始！
+    Pasta->>EvLoop: 【ステップ14】 await sleep(8.0) ➔ ⏱️ パスタの8分タイマーセット＆制御を渡す
+    note over EvLoop, Pasta: ⏳【0分00秒】依頼された側も8分タイマーを開始！
+    
+    note over Sauce, Pasta: ⚡【並行調理】先に依頼を出したおかげで、「自分の3分」と「相手の8分」が同時に進む！
     
     EvLoop->>Merge: 第一世代 queue_task 完了につき制御復帰
     Merge-->>Main: 【ステップ15-16】 elif completed == queue_task ➔ yield パスタ投入
@@ -44,7 +48,7 @@ sequenceDiagram
     end
 
     rect rgb(255, 235, 235)
-    note over EvLoop, Sauce: ⏳ ステップ12から継続測定中 ➔ 3分が経過しタイマー満了！
+    note over EvLoop, Sauce: ⏳ ステップ12から継続測定中 ➔ 自分の3分が経過しタイマー満了！
     end
 
     rect rgb(255, 240, 240)
@@ -58,12 +62,12 @@ sequenceDiagram
     Merge->>EvLoop: 【ステップ23】 4回目 await wait() ➔ 制御を渡す
     
     EvLoop->>Sauce: anext [第三世代] を実行
-    Sauce->>EvLoop: 【ステップ24】 await sleep(7.0) ➔ ⏱️ 7分タイマーセット＆制御を渡す
-    note over EvLoop, Sauce: ⏳【3分00秒】イベントループがSauceの7分タイマー計測を開始！
+    Sauce->>EvLoop: 【ステップ24】 await sleep(7.0) ➔ ⏱️ 自分の7分タイマーセット＆制御を渡す
+    note over EvLoop, Sauce: ⏳【3分00秒】自分の次の作業（7分煮込み）のタイマーを開始！
     end
 
     rect rgb(235, 255, 235)
-    note over EvLoop, Pasta: ⏳ ステップ14から継続測定中 ➔ 8分が経過しタイマー満了！
+    note over EvLoop, Pasta: ⏳ ステップ14から継続測定中 ➔ 依頼したパスタの8分が経過しタイマー満了！
     end
 
     rect rgb(240, 255, 240)
@@ -78,7 +82,7 @@ sequenceDiagram
     end
 
     rect rgb(255, 255, 225)
-    note over EvLoop, Sauce: ⏳ ステップ24から継続測定中 ➔ 合計10分（7分間）が経過しタイマー満了！
+    note over EvLoop, Sauce: ⏳ ステップ24から継続測定中 ➔ 合計10分（自分の7分間）が経過しタイマー満了！
     end
 
     rect rgb(255, 255, 240)
