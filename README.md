@@ -1,7 +1,7 @@
 ```mermaid
 sequenceDiagram
     autonumber
-    participant EvLoop as イベントループ (司令塔)
+    participant EvLoop as イベントループ
     participant Main as main()
     participant Merge as merge()
     participant Sauce as cook_sauce()
