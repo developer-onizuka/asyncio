@@ -20,13 +20,15 @@ sequenceDiagram
     Sauce->>EvLoop: asyncio.create_task(boil_pasta) を登録
     
     EvLoop->>Pasta: boil_pasta を実行開始
-    Pasta->>Queue: await queue.put(" [0分] パスタ投入")
-    Queue-->>EvLoop: 空きがあるので即時格納完了
+    Pasta->>Queue: await queue.put("  [0分] 🍝 パスタを鍋に投入！")
+    Queue-->>EvLoop: 格納完了＆待機中の queue.get() を通知
     Pasta->>EvLoop: await asyncio.sleep(8.0) でスリープ
     
-    EvLoop->>Merge: wait の判定 (Sauce と Queue(get) が完了)
+    EvLoop->>Merge: wait 完了 (Sauce と Queue の両方が準備完了)
     Merge-->>Main: yield "[0分] 1. お湯を沸かして..."
-    Merge-->>Main: yield " [0分] パスタ投入"
+    Merge->>Queue: queue.get() でメッセージを取得
+    Queue-->>Merge: "  [0分] 🍝 パスタを鍋に投入！"
+    Merge-->>Main: yield "  [0分] 🍝 パスタを鍋に投入！"
     Merge->>EvLoop: 再度 anext() と queue.get() をセットして await wait()
     end
 
@@ -44,12 +46,14 @@ sequenceDiagram
     rect rgb(240, 255, 240)
     note over Sauce, Pasta: 時間経過 [3分 -> 8分]
     EvLoop->>Pasta: await asyncio.sleep(8.0) が完了 (8分到達)
-    Pasta->>Queue: await queue.put(" [8分] パスタ茹であがり")
-    Queue-->>EvLoop: queue.get() を待機中の Merge を起こす
+    Pasta->>Queue: await queue.put("  [8分] ⏰ パスタが茹であがりました！")
+    Queue-->>EvLoop: 待機中の queue.get() を通知
     Pasta->>EvLoop: boil_pasta 終了
     
     EvLoop->>Merge: wait 完了 (Queue 側)
-    Merge-->>Main: yield " [8分] パスタ茹であがり"
+    Merge->>Queue: queue.get() でメッセージを取得
+    Queue-->>Merge: "  [8分] ⏰ パスタが茹であがりました！"
+    Merge-->>Main: yield "  [8分] ⏰ パスタが茹であがりました！"
     Merge->>EvLoop: 再度 queue.get() をセットして await wait()
     end
 
