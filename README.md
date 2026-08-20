@@ -42,7 +42,7 @@ sequenceDiagram
     end
 
     rect rgb(255, 235, 235)
-    note over Main, Queue: ⏳【時間経過：0分 ➔ 3分】 ステップ12でセットした3分（3秒）タイマーのカウントダウン中...
+    note over EvLoop, Sauce: ⏳【イベントループが計測中】 Sauceの依頼で3分（3秒）タイマーをカウントダウン
     end
 
     rect rgb(255, 240, 240)
@@ -60,7 +60,7 @@ sequenceDiagram
     end
 
     rect rgb(235, 255, 235)
-    note over Main, Queue: ⏳【時間経過：3分 ➔ 8分】 ステップ14でセットした8分（残り5秒）タイマーのカウントダウン中...
+    note over EvLoop, Pasta: ⏳【イベントループが計測中】 Pastaの8分タイマー（残り5秒）をカウントダウン
     end
 
     rect rgb(240, 255, 240)
@@ -75,7 +75,7 @@ sequenceDiagram
     end
 
     rect rgb(255, 255, 225)
-    note over Main, Queue: ⏳【時間経過：8分 ➔ 10分】 ステップ24でセットした7分（残り2秒）タイマーのカウントダウン中...
+    note over EvLoop, Sauce: ⏳【イベントループが計測中】 Sauceの7分タイマー（残り2秒）をカウントダウン
     end
 
     rect rgb(255, 255, 240)
