@@ -28,9 +28,8 @@ sequenceDiagram
     rect rgb(230, 230, 250)
     note over Main, Queue: ⏱️ [0分時点・後半] boil_pasta 起動と各タイマーの計測開始
     EvLoop->>Sauce: anext [第二世代] を実行
-    Sauce->>EvLoop: 【ステップ11】 create_task(boil_pasta)
-    note over Sauce, Pasta: 🍳【段取り】自分が3分休む前に、まず「パスタを茹でて！」と他人に作業を依頼しておく！
-    
+    note over Sauce, Pasta: 🍳 3分間でニンニクを切る自分の作業前に、パスタを茹でる依頼
+    Sauce->>EvLoop: 【ステップ11】 create_task(boil_pasta)    
     Sauce->>EvLoop: 【ステップ12】 await sleep(3.0) ➔ ⏱️ 3分タイマーセット＆制御を渡す
     note over EvLoop, Sauce: ⏳【イベントループが計測中】Sauceから頼まれた3分タイマーをカウント開始！
     
