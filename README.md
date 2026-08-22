@@ -1,3 +1,23 @@
+```
+# python3 example_asyncioSleep.py
+サブタスク1 ...
+サブタスク2 ...
+（約1秒待機）
+... サブタスク1 Done!
+... サブタスク2 Done!
+```
+
+```
+# python3 example_timeSleep.py
+サブタスク1 ...
+（1秒待機）
+... サブタスク1 Done!
+サブタスク2 ...
+（1秒待機）
+... サブタスク2 Done!
+```
+
+
 ```mermaid
 sequenceDiagram
     autonumber
