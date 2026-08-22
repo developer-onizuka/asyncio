@@ -118,7 +118,8 @@ async def merge(stream, queue: asyncio.Queue):
 async def main():
     print('【ステップ1】 q = asyncio.Queue()')
     q = asyncio.Queue()
-    print('【ステップ2】 async for msg in merge(cook_sauce(q), q):')
+    gen = cook_sauce(q) # ストリームを明示的にインスタンス化
+    print('【ステップ2】 async for msg in merge(gen, q):')
     async for msg in merge(cook_sauce(q), q):
         pass
 
