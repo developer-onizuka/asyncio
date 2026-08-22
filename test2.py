@@ -18,7 +18,7 @@ async def cook_sauce(queue: asyncio.Queue):
     yield "[0分] 1. お湯を沸かしてパスタを投下"
     
     print('    【ステップ11】 asyncio.create_task(boil_pasta(queue))')
-    asyncio.create_task(boil_pasta(queue))
+    pasta_task = asyncio.create_task(boil_pasta(queue))
     
     print('    【ステップ12】 await asyncio.sleep(3.0)')
     await asyncio.sleep(3.0) # 3分間切る
@@ -28,6 +28,7 @@ async def cook_sauce(queue: asyncio.Queue):
     
     print('    【ステップ24】 await asyncio.sleep(7.0)')
     await asyncio.sleep(7.0) # 7分間煮込む
+    await pasta_task # ソース完成直前にバックグラウンドタスクの完了を待機
     
     print('    【ステップ30】 yield "[10分] 3. ソースとパスタを和えて完成！"')
     yield "[10分] 3. ソースとパスタを和えて完成！"
