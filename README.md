@@ -13,7 +13,7 @@ asyncio を活用した非同期・並行処理の実装パターンとその内
    - イベントループにおけるタスク切り替え・ライフサイクル制御（タスク生成〜キャンセル）の可視化
 
 
-# 1. create_task / await による並列化
+# 1. create_task / await による非同期処理
 ```
 # python3 example_asyncioSleep.py
 サブタスク1 ...
@@ -82,8 +82,9 @@ World2
 
 
 ```
+# python3 test2.py
 【ステップ1】 q = asyncio.Queue()
-【ステップ2】 async for msg in merge(cook_sauce(q), q):
+【ステップ2】 async for msg in merge(gen, q):
   [merge] 【ステップ3】 main_task = asyncio.create_task(anext(stream, None))
   [merge] 【ステップ4】 queue_task = asyncio.create_task(queue.get())
   [merge] 【ステップ5】 await asyncio.wait(waiting, return_when=asyncio.FIRST_COMPLETED)
@@ -92,7 +93,7 @@ World2
   [merge] 【ステップ8】 yield "[0分] 1. お湯を沸かしてパスタを投下"
   [merge] 【ステップ9】 main_task = asyncio.create_task(anext(stream, None))
   [merge] 【ステップ10】 await asyncio.wait(waiting, return_when=asyncio.FIRST_COMPLETED)
-    【ステップ11】 asyncio.create_task(boil_pasta(queue))
+    【ステップ11】 pasta_task = asyncio.create_task(boil_pasta(queue))
     【ステップ12】 await asyncio.sleep(3.0)
       【ステップ13】 await queue.put("  [0分] 🍝 パスタを鍋に投入！")
       【ステップ14】 await asyncio.sleep(8.0)
@@ -105,7 +106,7 @@ World2
   [merge] 【ステップ21】 yield "[3分] 2. ニンニクを弱火で炒める"
   [merge] 【ステップ22】 main_task = asyncio.create_task(anext(stream, None))
   [merge] 【ステップ23】 await asyncio.wait(waiting, return_when=asyncio.FIRST_COMPLETED)
-    【ステップ24】 await asyncio.sleep(7.0)
+    【ステップ24】 await asyncio.sleep(7.0) and pasta_task
       【ステップ25】 await queue.put("  [8分] ⏰ パスタが茹であがりました！")
   [merge] 【ステップ26】 elif completed == queue_task:
   [merge] 【ステップ27】 yield completed.result()  # "[8分] ⏰ パスタが茹であがりました！"
