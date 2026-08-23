@@ -58,7 +58,7 @@ async def reporter_agent(text: str) -> str:
     # 変更: stream_async で受け取り、テキストを抽出しながら組み立てる
     text_result = ""
     async for event in agent.stream_async(f"Write a short inspection report for these face coordinates: {text}"):
-        if isinstance(event, str):
+        if isinstance(event, str): # LLM やフレームワークから流れてくるデータ型が揃っていないのをチェック
             text_result += event
         elif isinstance(event, dict) and "event" in event:
             event_data = event["event"]
