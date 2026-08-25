@@ -318,3 +318,10 @@ python step2.py
 # Step 3: 親子ストリームの合流リアルタイム出力確認
 python step3.py
 ```
+
+
+# 6.
+
+```
+$ kubectl expose pod strands-agents --type=LoadBalancer --name=strands-agents-svc --port=8501 --target-port=8501
+```

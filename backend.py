@@ -1,6 +1,6 @@
 import os
 import asyncio
-from typing import Optional  # 【追加】型定義用
+from typing import Optional
 from strands import Agent, tool
 from strands.models import OllamaModel
 from strands.tools.mcp import MCPClient
@@ -21,7 +21,7 @@ local_model = OllamaModel(
 )
 
 # ------------------------------------------------------------------
-# 【追加】サブエージェントごとのキュー参照を保持するクラスとインスタンス
+# サブエージェントごとのキュー参照を保持するクラスとインスタンス
 # ------------------------------------------------------------------
 class SubAgentState:
     def __init__(self):
@@ -31,7 +31,7 @@ _mcp_state = SubAgentState()
 _reporter_state = SubAgentState()
 
 # ------------------------------------------------------------------
-# 【追加】サブエージェントからキューへ進捗イベントを投入する関数
+# サブエージェントからキューへ進捗イベントを投入する関数
 # ------------------------------------------------------------------
 async def send_event(queue: Optional[asyncio.Queue], message: str, stage: str, data: str = ""):
     if not queue:
@@ -40,7 +40,7 @@ async def send_event(queue: Optional[asyncio.Queue], message: str, stage: str, d
     await queue.put({"event": {"subAgentProgress": progress}})
 
 # ------------------------------------------------------------------
-# 【追加】親ストリームと子キューを非同期で統合（合流）して出力する関数
+# 親ストリームと子キューを非同期で統合（合流）して出力する関数
 # ------------------------------------------------------------------
 async def merge_streams(stream, queue: asyncio.Queue):
     create_task = asyncio.create_task
@@ -75,35 +75,39 @@ async def merge_streams(stream, queue: asyncio.Queue):
 @tool
 async def mcp_agent(image_path: str) -> str:
     """Detects face coordinates from an image file path."""
-    queue = _mcp_state.queue  # 【追加】共有キューの取得
-    await send_event(queue, "顔検出エージェント (mcp_agent) 開始", "start")  # 【追加】開始通知をキューへ送信
+    queue = _mcp_state.queue
+    await send_event(queue, "顔検出エージェント (mcp_agent) 開始", "start")
     
-    with mcp_client:
-        mcp_tools = mcp_client.list_tools_sync()
-        agent = Agent(
-            model=local_model,
-            tools=mcp_tools,
-            system_prompt="与えられた画像から顔の座標数値のみを検出して返してください。説明文は不要です。"
-        )
-        text_result = ""
-        async for event in agent.stream_async(f"Detect face in: {image_path}"):
-            if isinstance(event, str): # LLM やフレームワークから流れてくるデータ型が揃っていないのをチェック
-                text_result += event
-            elif isinstance(event, dict) and "event" in event:
-                event_data = event["event"]
-                if "contentBlockDelta" in event_data:
-                    delta = event_data["contentBlockDelta"].get("delta", {})
-                    if "text" in delta:
-                        text_result += delta["text"]
+    try:
+        with mcp_client:
+            mcp_tools = mcp_client.list_tools_sync()
+            agent = Agent(
+                model=local_model,
+                tools=mcp_tools,
+                system_prompt="与えられた画像から顔の座標数値のみを検出して返してください。説明文は不要です。"
+            )
+            text_result = ""
+            async for event in agent.stream_async(f"Detect face in: {image_path}"):
+                if isinstance(event, str):
+                    text_result += event
+                elif isinstance(event, dict) and "event" in event:
+                    event_data = event["event"]
+                    if "contentBlockDelta" in event_data:
+                        delta = event_data["contentBlockDelta"].get("delta", {})
+                        if "text" in delta:
+                            text_result += delta["text"]
                         
-        await send_event(queue, "顔検出処理が完了しました", "complete", data=text_result)  # 【追加】完了通知をキューへ送信
-        return text_result
+            await send_event(queue, "顔検出処理が完了しました", "complete", data=text_result)
+            return text_result
+    except Exception as e:
+        await send_event(queue, f"顔検出エラー: {str(e)}", "error")
+        raise e
 
 @tool
 async def reporter_agent(text: str) -> str:
     """Generates a summary report. Always pass the detection result string into the 'text' argument."""
-    queue = _reporter_state.queue  # 【追加】共有キューの取得
-    await send_event(queue, "レポート生成エージェント (reporter_agent) 開始", "start")  # 【追加】開始通知をキューへ送信
+    queue = _reporter_state.queue
+    await send_event(queue, "レポート生成エージェント (reporter_agent) 開始", "start")
     
     agent = Agent(
         model=local_model,
@@ -120,14 +124,14 @@ async def reporter_agent(text: str) -> str:
                 if "text" in delta:
                     text_result += delta["text"]
                     
-    await send_event(queue, "レポート生成が完了しました", "complete", data=text_result)  # 【追加】完了通知をキューへ送信
+    await send_event(queue, "レポート生成が完了しました", "complete", data=text_result)
     return text_result
 
 ORCHESTRATOR_SYSTEM_PROMPT = """You are a precise task orchestrator.
 STRICT INSTRUCTIONS:
 Step 1: Call `mcp_agent` with the image file path.
 Step 2: Take the output string from `mcp_agent` and pass it directly to `reporter_agent` using parameter 'text'.
-Step 3: Return the final text from `reporter_agent`.
+Step 3: Output the final markdown report from `reporter_agent`.
 """
 
 orchestrator = Agent(
@@ -136,25 +140,13 @@ orchestrator = Agent(
     system_prompt=ORCHESTRATOR_SYSTEM_PROMPT
 )
 
-async def main():
-    # print("--- Step 2: Running Stream Test ---")  # 【削除】Step 2 の表示
-    print("--- Step 3: Stream Merge Test ---")     # 【追加】Step 3 の表示
-    
-    # 【追加】共有キューのインスタンス化と状態変数へのセット
+async def agent_stream(image_path: str):
+    """共有キューを初期化し、統合ストリームを yield する"""
     queue = asyncio.Queue()
     _mcp_state.queue = queue
     _reporter_state.queue = queue
     
-    stream = orchestrator.stream_async("/strands-agents-mcp/mcp/Bill.jpg")
+    stream = orchestrator.stream_async(image_path)
     
-    # print("\n--- リアルタイム受信ログ ---")  # 【削除】
-    # async for event in stream:             # 【削除】Step 2 の単一ストリーム受信
-    #     print(f"[STREAM EVENT]: {event}")  # 【削除】
-
-    print("\n--- 結合ストリーム（親のイベント＋子の Queue 通知）---")  # 【追加】
-    # 【追加】merge_streams を通して親と子のイベントを合流して出力
-    async for merged_event in merge_streams(stream, queue):
-        print(f"[MERGED EVENT]: {merged_event}")
-
-if __name__ == "__main__":
-    asyncio.run(main())
+    async for event in merge_streams(stream, queue):
+        yield event
