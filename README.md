@@ -320,8 +320,19 @@ python step3.py
 ```
 
 
-# 6.
+# 6. フロントエンド
 
+```
+$ kubectl apply -f strands-agents.yaml
+$ kubectl exec -it pods/strands-agents -- /bin/bash
+# apt update
+# apt install -y git
+# git clone https://github.com/developer-onizuka/asyncio
+# cd asyncio
+# pip install streamlit strands-agents mcp
+# streamlit run frontend-streamlit.py
+```
 ```
 $ kubectl expose pod strands-agents --type=LoadBalancer --name=strands-agents-svc --port=8501 --target-port=8501
 ```
+<img src="https://github.com/developer-onizuka/asyncio/blob/main/streamlit.png" width="720">
